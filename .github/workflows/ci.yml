@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Matches upstream DataHub's supported range (metadata-ingestion/setup.py
+        # declares python_requires>=3.10 and classifies 3.10-3.12).
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install
+        run: uv sync --all-extras --python ${{ matrix.python-version }}
+
+      - name: Lint
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+
+      - name: Type check
+        run: uv run mypy src
+
+      - name: Test
+        run: uv run pytest --cov=datahub_qualytics --cov-report=term-missing
+
+  secret-scan:
+    # Fixtures are recorded from a real single-tenant Qualytics deployment. This job is
+    # the backstop that keeps hostnames, tokens or table names out of the repo.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # The open-source gitleaks CLI rather than gitleaks/gitleaks-action, which needs a
+      # paid license for organisation-owned repos and failed before scanning anything.
+      # Scans the full history, which is what goes public along with the tree.
+      - name: gitleaks (full history)
+        run: >
+          docker run --rm -v "${{ github.workspace }}:/repo"
+          ghcr.io/gitleaks/gitleaks:v8.18.4
+          detect --source=/repo --redact --verbose --exit-code=1

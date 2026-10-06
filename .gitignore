@@ -1,0 +1,36 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+uv.lock
+.DS_Store
+.idea/
+.vscode/
+
+# DataHub's Claude skills, vendored by `npx skills add datahub-project/datahub-skills`.
+# Not committed: ~2MB of third-party files that ship without a bundled license. Our own
+# skill *outputs* live in skill_docs/ and ARE committed, which is what DataHub asks
+# contributors for.
+/.agents/
+/.claude/
+skills-lock.json
+
+# Local, maintainer-only notes: agent instructions and the runbook for verifying against
+# Qualytics' own deployments. Claude Code loads CLAUDE.local.md automatically.
+CLAUDE.md
+CLAUDE.local.md
+
+# Local ingestion runs and anything captured from a live tenant that has not been
+# sanitized yet. Sanitized fixtures belong in tests/fixtures/ and ARE committed.
+/scratch/
+*.local.yml
+*.local.json
+generated_output/
